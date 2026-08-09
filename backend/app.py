@@ -8,12 +8,13 @@ import numpy as np
 super_kart_app_api = Flask("Super Kart Price Predictor")
 
 # Define paths for the saved preprocessor and model (ensure these are accessible in the deployment environment)
-preprocessor_path = '/content/drive/MyDrive/SuperKart/preprocessor.joblib'
-model_path = '/content/drive/MyDrive/SuperKart/final_superkart_sales_model.joblib'
+# preprocessor_path = '/content/drive/MyDrive/SuperKart/preprocessor.joblib'
+# Define the file path to load the uploaded serialized model
+model_path = "backend_files/final_superkart_sales_model.joblib"
 
 # Load the preprocessor and model globally to avoid reloading on each request
 try:
-    loaded_preprocessor = joblib.load(preprocessor_path)
+    # loaded_preprocessor = joblib.load(preprocessor_path)
     loaded_final_model = joblib.load(model_path)
     print("Preprocessor and model loaded successfully!")
 except Exception as e:
