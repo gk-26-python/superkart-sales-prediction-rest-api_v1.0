@@ -16,10 +16,18 @@ try:
     loaded_preprocessor = joblib.load(preprocessor_path)
     loaded_final_model = joblib.load(model_path)
     print("Preprocessor and model loaded successfully!")
+    # Define the original column order as used during training
+    # This is crucial for the ColumnTransformer to work correctly with new data
+    GLOBAL_ORIGINAL_X_COLUMNS = ['Product_Id', 'Product_Weight', 'Product_Sugar_Content',
+                                 'Product_Allocated_Area', 'Product_Type', 'Product_MRP',
+                                 'Store_Id', 'Store_Establishment_Year', 'Store_Size',
+                                 'Store_Location_City_Type', 'Store_Type', 'Store_Age']
+
 except Exception as e:
     print(f"Error loading model or preprocessor: {e}")
     loaded_preprocessor = None
     loaded_final_model = None
+    GLOBAL_ORIGINAL_X_COLUMNS = [] # Ensure it's defined even on error
 
 
 @super_kart_app_api.get('/')
@@ -41,16 +49,20 @@ def predict():
         data = request.get_json(force=True)
 
         # Convert input data to DataFrame
-        # The input data should match the structure of X before preprocessing
         input_df = pd.DataFrame([data])
 
         # Ensure 'Store_Age' is calculated if not provided in input
         if 'Store_Establishment_Year' in input_df.columns and 'Store_Age' not in input_df.columns:
             current_year = 2024 # Use the same current_year as during training
             input_df['Store_Age'] = current_year - input_df['Store_Establishment_Year']
+        # If 'Store_Establishment_Year' is missing but 'Store_Age' is also missing,
+        # this might cause an issue. For now, assume 'Store_Establishment_Year' is always present if 'Store_Age' is not.
+
+        # Ensure the input_df columns are in the same order as the training data's X.columns.
+        # This is crucial for the ColumnTransformer to apply transformers to the correct columns.
+        input_df = input_df.reindex(columns=GLOBAL_ORIGINAL_X_COLUMNS, fill_value=None)
 
         # Preprocess the input data
-        # Ensure the order of columns and feature names are consistent with training
         processed_input = loaded_preprocessor.transform(input_df)
 
         # Make prediction
